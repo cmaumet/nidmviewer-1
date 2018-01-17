@@ -27,7 +27,7 @@ setup(
     description="command line or server tool to view or compare nidm results.",
     keywords='nidm nidm-results brain imaging neuroimaging',
 
-    install_requires = ['numpy','rdflib','rdfextras','rdflib-jsonld','pandas'],
+    install_requires = ['numpy','rdflib','rdfextras','rdflib-jsonld','pandas','requests'],
 
     entry_points = {
         'console_scripts': [

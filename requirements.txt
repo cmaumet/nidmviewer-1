@@ -3,3 +3,4 @@ rdflib
 rdfextras
 rdflib-jsonld
 pandas
+requests

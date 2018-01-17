@@ -99,6 +99,7 @@ def generate(ttl_files,base_image=None,retrieve=False,view_in_browser=False,colu
     # If excursion set is empty (regardless of peaks listed in the .ttl file) show "No suprathreshold voxels" instead of the table and the nifiti viewer. (this will happen if the analysis did not return any statistically significant results)
     empty_images = dict()
 
+    view_in_browser = False
     if view_in_browser==True:
         peaks,copy_list = generate_temp(peaks,"excsetmap_location")
 
@@ -116,6 +117,7 @@ def generate(ttl_files,base_image=None,retrieve=False,view_in_browser=False,colu
             base_image = base_copy.values()[0]
         
         template = add_string("[SUB_EMPTY_SUB]",str(empty_images),template)
+
         template = add_string("[SUB_PEAKS_SUB]",str(peaks),template)
         template = add_string("[SUB_BASEIMAGE_SUB]",str(base_image),template)
         view(template,copy_list,port)
@@ -125,6 +127,7 @@ def generate(ttl_files,base_image=None,retrieve=False,view_in_browser=False,colu
             base_image = get_standard_brain(load=False)
 
         image_files = get_images(peaks,"excsetmap_location")
+
         for image_file in image_files:
             if check_empty == True:
                 empty_images[image_file] = is_empty(image_file)
@@ -203,11 +206,12 @@ def retrieve_nifti(peaks,retrieve,location_key):
     '''
     # Note: retrieve = True has not been tested!
     updated_peaks = dict()
-    for nidm,entries in peaks.iteritems():
-        
+    redirect_dict = dict()
+    for nidm,entries in peaks.iteritems(): 
         for e in range(len(entries)):
             if location_key in entries[e]:
                 brainmap = entries[e][location_key]
+
                 if retrieve:
                     image_ext = get_extension(brainmap)
                     temp_path = get_random_name()
@@ -215,10 +219,16 @@ def retrieve_nifti(peaks,retrieve,location_key):
                     temp_image_path = "%s/%s.%s" %(temp_dir,temp_path,image_ext)
                     if download_file(brainmap,temp_image_path):
                         entries[e][location_key] = temp_image_path
-                        # r = requests.get(base_url)
                 else:
-                    print('-------------------------')
-                    print(brainmap)
+                    # Look for redirected address if any 
+                    # (important for redirects from HTTP to HTTPS)
+                    if '://' in brainmap:
+                        if brainmap in redirect_dict:
+                            entries[e][location_key] = redirect_dict[brainmap]
+                        else:
+                            r = requests.get(brainmap)
+                            entries[e][location_key] = r.url
+                            redirect_dict[brainmap] = r.url
 
         updated_peaks[nidm] = entries
     return updated_peaks
